@@ -15,11 +15,7 @@ export interface LLMProvider {
    * @param contextContent Optional context content to include in the prompt
    * @returns The generated code
    */
-  generateCode(
-    prompt: string,
-    temperature?: number,
-    contextContent?: string,
-  ): Promise<string>;
+  generateCode(prompt: string, temperature?: number, contextContent?: string): Promise<string>;
 
   /**
    * Get all available models for this provider
@@ -50,16 +46,13 @@ export interface ProviderWithModel {
  * @param modelId The model identifier (optional if using "provider:model" format)
  * @returns The LLM provider
  */
-export async function getLLMProvider(
-  providerName: string,
-  modelId?: string,
-): Promise<LLMProvider> {
+export async function getLLMProvider(providerName: string, modelId?: string): Promise<LLMProvider> {
   // Parse provider:model format if provided
   let actualProvider = providerName;
   let actualModel = modelId;
 
-  if (providerName.includes(':') && !modelId) {
-    const [provider, model] = providerName.split(':', 2);
+  if (providerName.includes(":") && !modelId) {
+    const [provider, model] = providerName.split(":", 2);
     actualProvider = provider;
     actualModel = model;
   }
@@ -67,7 +60,7 @@ export async function getLLMProvider(
   // Ensure model ID is provided
   if (!actualModel) {
     throw new Error(
-      `Model ID is required. Use either getLLMProvider('provider', 'model') or getLLMProvider('provider:model')`
+      `Model ID is required. Use either getLLMProvider('provider', 'model') or getLLMProvider('provider:model')`,
     );
   }
 
@@ -80,6 +73,9 @@ export async function getLLMProvider(
     case "anthropic":
       const { AnthropicProvider } = await import("./anthropic");
       return new AnthropicProvider(actualModel);
+    case "llamacpp":
+      const { LlamaCppProvider } = await import("./llamacpp");
+      return new LlamaCppProvider(actualModel);
     case "google":
       const { GoogleGenAIProvider } = await import("./google");
       return new GoogleGenAIProvider(actualModel);
@@ -115,7 +111,7 @@ export async function getLLMProvider(
   // Provider not found
   throw new Error(
     `Unknown LLM provider: ${actualProvider}. ` +
-    `Native providers: openai, anthropic, google, openrouter, fireworks, ollama, zai, moonshot, xai, meta, minimax, cursor.`
+      `Native providers: openai, anthropic, google, openrouter, fireworks, ollama, llamacpp, zai, moonshot, xai, meta, minimax, cursor.`,
   );
 }
 
@@ -141,6 +137,7 @@ export async function getAllLLMProviders(): Promise<ProviderWithModel[]> {
     { name: "meta", displayName: "Meta" },
     { name: "minimax", displayName: "MiniMax" },
     { name: "cursor", displayName: "Cursor" },
+    { name: "llamacpp", displayName: "Llama.cpp" },
   ];
 
   for (const { name, displayName } of nativeProviders) {

@@ -1,22 +1,16 @@
 import { Agent } from "undici";
-import {
-  DEFAULT_SYSTEM_PROMPT,
-  DEFAULT_SYSTEM_PROMPT_WITH_CONTEXT,
-} from "../utils/prompt";
+import { DEFAULT_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT_WITH_CONTEXT } from "../utils/prompt";
 import type { LLMProvider } from "./index";
 import { Ollama, type ChatRequest } from "ollama";
 import { log } from "../utils/tui-events";
 
 // https://github.com/ollama/ollama-js/issues/103
-const noTimeoutFetch = (
-  input: string | URL | globalThis.Request,
-  init?: RequestInit
-) => {
+const noTimeoutFetch = (input: string | URL | globalThis.Request, init?: RequestInit) => {
   const someInit = init || {};
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return fetch(input, {
     ...someInit,
-    dispatcher: new Agent({ headersTimeout: 2700000 }),
+    dispatcher: new Agent({ connect: { timeout: 2700000 }, bodyTimeout: 2700000, headersTimeout: 2700000 }),
   } as any);
 };
 
@@ -24,9 +18,7 @@ export class OllamaProvider implements LLMProvider {
   private client: Ollama;
   private modelId: string;
   name = "Ollama";
-  private readonly availableModels = [
-    "hf.co/bartowski/open-thoughts_OpenThinker3-7B-GGUF:Q8_0",
-  ];
+  private readonly availableModels = ["hf.co/bartowski/open-thoughts_OpenThinker3-7B-GGUF:Q8_0"];
 
   constructor(modelId?: string) {
     // Get Ollama host from environment variable or use default
@@ -43,21 +35,11 @@ export class OllamaProvider implements LLMProvider {
    * @param contextContent Optional context content to include in prompts
    * @returns The generated code
    */
-  async generateCode(
-    prompt: string,
-    temperature?: number,
-    contextContent?: string
-  ): Promise<string> {
+  async generateCode(prompt: string, temperature?: number, contextContent?: string): Promise<string> {
     try {
-      log(
-        `🤖 Generating code with Ollama using model: ${this.modelId} (temp: ${
-          temperature ?? "default"
-        })...`
-      );
+      log(`🤖 Generating code with Ollama using model: ${this.modelId} (temp: ${temperature ?? "default"})...`);
 
-      const systemPrompt = contextContent
-        ? DEFAULT_SYSTEM_PROMPT_WITH_CONTEXT
-        : DEFAULT_SYSTEM_PROMPT;
+      const systemPrompt = contextContent ? DEFAULT_SYSTEM_PROMPT_WITH_CONTEXT : DEFAULT_SYSTEM_PROMPT;
 
       const messages: Array<{
         role: "system" | "user" | "assistant";
@@ -101,11 +83,7 @@ export class OllamaProvider implements LLMProvider {
       return response.message?.content || "";
     } catch (error) {
       console.error("Error generating code with Ollama:", error);
-      throw new Error(
-        `Failed to generate code: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+      throw new Error(`Failed to generate code: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

@@ -1,27 +1,25 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
-
 ## Project Overview
 
-SvelteBench is an LLM benchmark tool for Svelte 5 components based on the HumanEval methodology. It evaluates LLM-generated Svelte components by testing them against predefined test suites and calculates pass@k metrics.
+SvelteBench: LLM benchmark for Svelte 5 components, HumanEval methodology. Evaluate LLM-generated Svelte components vs predefined test suites, compute pass@k.
 
 **Core Architecture:**
 
-- `index.ts` - Main benchmark orchestrator that manages the full test cycle
-- `src/llms/` - Provider abstraction layer supporting OpenAI, Anthropic, Google, and OpenRouter
-- `src/tests/` - Test definitions with `prompt.md` and `test.ts` pairs
-- `src/utils/test-manager.ts` - Sequential HumanEval test execution logic (default)
-- `src/utils/parallel-test-manager.ts` - Parallel HumanEval test execution logic (optional)
+- `index.ts` - Main benchmark orchestrator, full test cycle
+- `src/llms/` - Provider abstraction: OpenAI, Anthropic, Google, OpenRouter
+- `src/tests/` - Test defs: `prompt.md` + `test.ts` pairs
+- `src/utils/test-manager.ts` - Sequential HumanEval logic (default)
+- `src/utils/parallel-test-manager.ts` - Parallel HumanEval logic (optional)
 - `src/utils/test-runner.ts` - Vitest integration for component testing
-- `tmp/` - Runtime directory for generated components (unique subdirs per test/sample)
+- `tmp/` - Runtime dir for generated components (subdirs per test/sample)
 
 ## Execution Modes
 
-SvelteBench supports two execution modes:
+Two modes:
 
-- **Sequential (default)**: Tests run one at a time, with samples generated sequentially. Full sample-level checkpointing and resumption support. Provides detailed progress output and is more reliable for long-running benchmarks.
-- **Parallel**: Tests run one at a time, but samples within each test are generated in parallel for faster execution. Full sample-level checkpointing and resumption support with optimized output formatting. Set `PARALLEL_EXECUTION=true` to enable.
+- **Sequential (default)**: Tests one at a time, samples sequential. Full sample-level checkpointing + resumption. Detailed progress, reliable for long runs.
+- **Parallel**: Tests one at a time, samples within test parallel (faster). Full checkpointing + resumption, optimized output. Set `PARALLEL_EXECUTION=true`.
 
 ## Common Commands
 
@@ -53,7 +51,7 @@ pnpm run verify
 
 ## Environment Variables
 
-Set environment variables to control execution behavior:
+Control behavior via env vars:
 
 ```bash
 # Debug mode for faster development testing
@@ -65,41 +63,41 @@ DEBUG_MODEL=openai/gpt-oss-20b:free
 PARALLEL_EXECUTION=true
 ```
 
-Multiple models can be specified: `DEBUG_MODEL=model1,model2,model3`
+Multiple models: `DEBUG_MODEL=model1,model2,model3`
 
 ## Test Structure
 
-Each test in `src/tests/` requires:
+Each test in `src/tests/` needs:
 
-- `prompt.md` - Instructions for the LLM to generate a Svelte component
-- `test.ts` - Vitest tests that validate the generated component functionality
-- `Reference.svelte` - Reference implementation for validation
+- `prompt.md` - LLM instructions to generate Svelte component
+- `test.ts` - Vitest tests validating generated component
+- `Reference.svelte` - Reference impl for validation
 
-The benchmark generates components in `tmp/{provider}/` directories and runs tests using the integrated Vitest setup.
+Generate components in `tmp/{provider}/`, run tests via integrated Vitest.
 
 ## Versioning System
 
-**Current Results:** Results generated with fixed test prompts and improved error handling. All new benchmark runs produce results with:
+**Current Results:** Fixed test prompts, improved error handling. New runs produce results with:
 
-- Fixed quotation mark issues in test prompts that were causing model confusion
-- Corrected Svelte binding syntax examples (e.g., `bind:value={text}` instead of `bind:value="{text}"`)
-- Improved test reliability and accuracy
-- Clean filenames without version suffixes (e.g., `benchmark-results-2025-08-27T12-34-56.789Z.json`)
+- Fixed quotation mark issues in prompts (caused model confusion)
+- Corrected Svelte binding syntax (`bind:value={text}` not `bind:value="{text}"`)
+- Improved test reliability + accuracy
+- Clean filenames, no version suffixes (`benchmark-results-2025-08-27T12-34-56.789Z.json`)
 
-**Legacy Results:** Historical results from original test suite in the `benchmarks/v1/` directory. These may contain inconsistencies due to prompt formatting issues.
+**Legacy Results:** Original suite, in `benchmarks/v1/`. May have inconsistencies from prompt formatting.
 
 ## Environment Setup
 
-Copy `.env.example` to `.env` and configure API keys for desired providers:
+Copy `.env.example` to `.env`, set API keys:
 
-- `OPENAI_API_KEY` - For GPT models
-- `ANTHROPIC_API_KEY` - For Codex models
-- `GEMINI_API_KEY` - For Gemini models
-- `OPENROUTER_API_KEY` - For OpenRouter access
+- `OPENAI_API_KEY` - GPT models
+- `ANTHROPIC_API_KEY` - Codex models
+- `GEMINI_API_KEY` - Gemini models
+- `OPENROUTER_API_KEY` - OpenRouter
 
 ## Testing and Validation
 
-- Tests use Vitest with @testing-library/svelte for component testing
-- Each test runs with a 120-second timeout
-- Pass@k metrics are calculated using HumanEval methodology (10 samples per test by default, 1 for expensive models)
-- Results are saved to timestamped JSON files in `benchmarks/`
+- Vitest + @testing-library/svelte for component testing
+- 120-second timeout per test
+- Pass@k via HumanEval (10 samples/test default, 1 for expensive models)
+- Results saved to timestamped JSON in `benchmarks/`

@@ -1,111 +1,88 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code in this repo.
 
-## Project Overview
+## Overview
 
-SvelteBench is an LLM benchmark tool for Svelte 5 components based on the HumanEval methodology. It evaluates LLM-generated Svelte components by testing them against predefined test suites and calculates pass@k metrics.
+SvelteBench: LLM benchmark for Svelte 5 components. HumanEval method. Tests
+LLM-generated Svelte components vs predefined suites. Computes pass@k.
 
-**Core Architecture:**
+**Arch:**
 
-- `index.ts` - Main benchmark orchestrator that manages the full test cycle
-- `src/llms/` - Provider abstraction layer supporting OpenAI, Anthropic, Google, and OpenRouter
-- `src/tests/` - Test definitions with `prompt.md` and `test.ts` pairs
-- `src/utils/test-manager.ts` - Sequential HumanEval test execution logic (default)
-- `src/utils/parallel-test-manager.ts` - Parallel HumanEval test execution logic (optional)
-- `src/utils/test-runner.ts` - Vitest integration for component testing
-- `tmp/` - Runtime directory for generated components (unique subdirs per test/sample)
+- `index.ts` - Main orchestrator, full test cycle
+- `src/llms/` - Provider abstraction: OpenAI, Anthropic, Google, OpenRouter
+- `src/tests/` - Test defs: `prompt.md` + `test.ts` pairs
+- `src/utils/test-manager.ts` - Sequential HumanEval (default)
+- `src/utils/parallel-test-manager.ts` - Parallel HumanEval (optional)
+- `src/utils/test-runner.ts` - Vitest for components
+- `tmp/` - Runtime dir, generated components (subdirs per test/sample)
 
-## Execution Modes
+## Modes
 
-SvelteBench supports two execution modes:
+- **Sequential (default)**: One test at a time, samples sequential. Full
+  checkpointing + resumption. Detailed progress. Reliable for long runs.
+- **Parallel**: One test at a time, samples within test parallel (faster).
+  Full checkpointing + resumption. Set `PARALLEL_EXECUTION=true`.
 
-- **Sequential (default)**: Tests run one at a time, with samples generated sequentially. Full sample-level checkpointing and resumption support. Provides detailed progress output and is more reliable for long-running benchmarks.
-- **Parallel**: Tests run one at a time, but samples within each test are generated in parallel for faster execution. Full sample-level checkpointing and resumption support with optimized output formatting. Set `PARALLEL_EXECUTION=true` to enable.
-
-## Common Commands
+## Commands
 
 ```bash
-# Run the full benchmark (sequential execution)
-pnpm start
-
-# Launch the interactive TUI
-pnpm tui
-
-# Run the env/CLI-compatible benchmark directly
-pnpm run-tests
-
-# Run with parallel execution (faster but more verbose)
-PARALLEL_EXECUTION=true pnpm run-tests
-
-# Run only tests (without building visualization)
-pnpm run run-tests
-
-# Run with context file (Svelte docs)
+pnpm start                     # full benchmark (sequential)
+pnpm tui                       # interactive TUI
+pnpm run-tests                 # env/CLI benchmark directly
+PARALLEL_EXECUTION=true pnpm run-tests   # parallel (faster, verbose)
+pnpm run run-tests             # tests only (no viz build)
 pnpm run run-tests -- --context ./context/svelte.dev/llms-small.txt
-
-# Run with both parallel execution and context
 PARALLEL_EXECUTION=true pnpm run run-tests -- --context ./context/svelte.dev/llms-small.txt
-
-# Run specific test with vitest
-pnpm test
-
-# Build visualization from results
-pnpm run build
-
-# Verify benchmark results
-pnpm run verify
+pnpm test                      # specific test (vitest)
+pnpm run build                 # build visualization
+pnpm run verify                # verify results
 ```
 
-## Environment Variables
-
-Set environment variables to control execution behavior:
+## Env Vars
 
 ```bash
-# Debug mode for faster development testing
 DEBUG_MODE=true
 DEBUG_PROVIDER=openrouter
 DEBUG_MODEL=openai/gpt-oss-20b:free
-
-# Enable parallel execution for faster benchmark runs
 PARALLEL_EXECUTION=true
 ```
 
-Multiple models can be specified: `DEBUG_MODEL=model1,model2,model3`
+Multiple models: `DEBUG_MODEL=model1,model2,model3`
 
 ## Test Structure
 
-Each test in `src/tests/` requires:
+Each test in `src/tests/`:
 
-- `prompt.md` - Instructions for the LLM to generate a Svelte component
-- `test.ts` - Vitest tests that validate the generated component functionality
-- `Reference.svelte` - Reference implementation for validation
+- `prompt.md` - LLM instructions to generate component
+- `test.ts` - Vitest tests validating component
+- `Reference.svelte` - Reference impl for validation
 
-The benchmark generates components in `tmp/{provider}/` directories and runs tests using the integrated Vitest setup.
+Components generated in `tmp/{provider}/`, tested via Vitest.
 
-## Versioning System
+## Versioning
 
-**Current Results:** Results generated with fixed test prompts and improved error handling. All new benchmark runs produce results with:
+**Current Results:** Fixed prompts, better error handling. New runs:
 
-- Fixed quotation mark issues in test prompts that were causing model confusion
-- Corrected Svelte binding syntax examples (e.g., `bind:value={text}` instead of `bind:value="{text}"`)
-- Improved test reliability and accuracy
-- Clean filenames without version suffixes (e.g., `benchmark-results-2025-08-27T12-34-56.789Z.json`)
+- Fixed quotation mark issues in prompts (caused model confusion)
+- Corrected Svelte binding (`bind:value={text}` not `bind:value="{text}"`)
+- Better test reliability
+- Clean filenames, no version suffix (`benchmark-results-2025-08-27T12-34-56.789Z.json`)
 
-**Legacy Results:** Historical results from original test suite in the `benchmarks/v1/` directory. These may contain inconsistencies due to prompt formatting issues.
+**Legacy Results:** Original suite in `benchmarks/v1/`. May have inconsistencies.
 
-## Environment Setup
+## Setup
 
-Copy `.env.example` to `.env` and configure API keys for desired providers:
+Copy `.env.example` to `.env`, set keys:
 
-- `OPENAI_API_KEY` - For GPT models
-- `ANTHROPIC_API_KEY` - For Claude models
-- `GEMINI_API_KEY` - For Gemini models
-- `OPENROUTER_API_KEY` - For OpenRouter access
+- `OPENAI_API_KEY` - GPT
+- `ANTHROPIC_API_KEY` - Claude
+- `GEMINI_API_KEY` - Gemini
+- `OPENROUTER_API_KEY` - OpenRouter
 
-## Testing and Validation
+## Testing
 
-- Tests use Vitest with @testing-library/svelte for component testing
-- Each test runs with a 120-second timeout
-- Pass@k metrics are calculated using HumanEval methodology (10 samples per test by default, 1 for expensive models)
-- Results are saved to timestamped JSON files in `benchmarks/`
+- Vitest + @testing-library/svelte
+- 120s timeout per test
+- pass@k via HumanEval (10 samples/test default, 1 for expensive models)
+- Results: timestamped JSON in `benchmarks/`
